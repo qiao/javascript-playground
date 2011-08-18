@@ -1,13 +1,11 @@
-## Qiao's Javascript Playground
+Qiao's Javascript Playground 
+============================
 
-### Introduction
+#### A collection of my toy codes ####
 
-This is a collection of my toy codes.
+homepage: https://github.com/qiao/javascript-playground
 
-homepage https://github.com/qiao/javascript-playground
+### Project List ###
 
-### Project List
-
-1. Tree by Recursion
-    
+1. [WebGL Tree](http://qiao.github.com/javascript-playground/webgl-tree/)
     A simple demo using the awesome [Three.js](https://github.com/mrdoob/three.js) to generate a tree by recursion.
