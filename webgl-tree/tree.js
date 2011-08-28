@@ -1,5 +1,19 @@
 var renderer, scene, camera, stats,
 
+    /*
+    initPos = new THREE.Vector3(700, 50, 1900),
+    initLight = new THREE.Vector3(0, 1500, 1000),
+    deltaCam = new THREE.Vector3(),
+    */
+
+    sceneHUD, hudMaterial, cameraOtho,
+
+    SHADOW_MAP_WIDTH = 1024,
+    SHADOW_MAP_HEIGHT = 1024,
+
+    SCREEN_WIDTH = window.innerWidth,
+    SCREEN_HEIGHT = window.innerHeight,
+
     MAX_BRANCHES = 5,
     MIN_BRANCHES = 3,
     RADIUS_SHRINK = 0.6,
@@ -14,17 +28,30 @@ var renderer, scene, camera, stats,
     floor = Math.floor,
     PI = Math.PI;
 
+function createHUD() {
+
+    cameraOrtho = new THREE.Camera( 45, SHADOW_MAP_WIDTH / SHADOW_MAP_HEIGHT, 5, 3000 );
+    cameraOrtho.projectionMatrix = THREE.Matrix4.makeOrtho( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2,  
+            SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, -10, 1000 );
+    cameraOrtho.position.z = 10;
+
+    var shader = THREE.ShaderUtils.lib[ "screen" ];
+    var uniforms = new THREE.UniformsUtils.clone( shader.uniforms );
+
+    hudMaterial = new THREE.MeshShaderMaterial( { vertexShader: shader.vertexShader, 
+        fragmentShader: shader.fragmentShader, uniforms: uniforms } );
+
+    var hudGeo = new THREE.PlaneGeometry( SHADOW_MAP_WIDTH / 2, SHADOW_MAP_HEIGHT / 2 );
+    var hudMesh = new THREE.Mesh( hudGeo, hudMaterial );
+    hudMesh.position.x = ( SCREEN_WIDTH - SHADOW_MAP_WIDTH / 2 ) * -0.5;
+    hudMesh.position.y = ( SCREEN_HEIGHT - SHADOW_MAP_HEIGHT / 2 ) * -0.5;
+
+    sceneHUD = new THREE.Scene();
+    sceneHUD.addObject( hudMesh );
+
+}
 
 function init() {
-
-    // setup renderer
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // create graphic container and attach renderer to it
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    container.appendChild(renderer.domElement);
 
     // setup track-ball camera
     camera = new THREE.TrackballCamera({
@@ -48,8 +75,68 @@ function init() {
     camera.position.set(500, 100, 400);
     camera.translate(200, new THREE.Vector3(0, 1, 0));
 
-    // setup scene
+    /*
+    // SHADOW TEXTURE
+    var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
+    shadowTexture = new THREE.WebGLRenderTarget( SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, pars );
+    */
+
     scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x000000, 500, 1500);
+
+    setupLights();
+
+    /*
+    createHUD();
+    */
+    drawGround();
+
+    drawTree(new THREE.Vector3(0, 0, 0), // start position
+             new THREE.Vector3(0, 1, 0), // direction
+             150,                        // length
+             8,                          // depth
+             10);                        // radius
+
+    // setup scene
+    renderer = new THREE.WebGLRenderer( { clearColor: 0x000000, clearAlpha: 1, antialias: true } );
+    renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+
+    renderer.setClearColor( scene.fog.color, 1 );
+    renderer.autoClear = false;
+
+    renderer.shadowCameraNear = 3;
+    renderer.shadowCameraFar = camera.far;
+    renderer.shadowCameraFov = 50;
+
+    renderer.shadowMapBias = 0.0039;
+    renderer.shadowMapDarkness = 0.5;
+    renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
+    renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
+
+    renderer.shadowMapEnabled = true;
+    renderer.shadowMapSoft = true;
+
+
+// setup renderer
+    /*
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    renderer.shadowCameraNear = 3;
+    renderer.shadowCameraFar = 3000;
+    renderer.shadowCameraFov = 45;
+
+    renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
+    renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
+    renderer.shadowMapEnabled = true;
+    */
+
+    // create graphic container and attach renderer to it
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    container.appendChild(renderer.domElement);
+
+
 
     // setup stats
     stats = new Stats();
@@ -70,9 +157,9 @@ function drawTree(start_position, direction, length, depth, radius) {
 
     // determine branch color
     if (depth < 3) {
-        color = floor(rand() * 128 + 64) << 8; // random green color
+        color = (rand() * 128 + 64) << 8; // random green color
     } else {
-        color = (floor(rand() * 48 + 64) << 16) + 0x3311; // random brown color
+        color = ((rand() * 48 + 64) << 16) | 0x3311; // random brown color
     }
 
     num_segs = depth + 1; // min num_segs = 2
@@ -87,6 +174,7 @@ function drawTree(start_position, direction, length, depth, radius) {
     );
     // rotate the cylinder to follow the direction
     cylinder.lookAt(direction);
+
     
     // get the offset from start position to cylinder center position
     half_length_offset = direction.clone();
@@ -95,6 +183,9 @@ function drawTree(start_position, direction, length, depth, radius) {
     // calculate center position
     cylinder.position = start_position.clone();
     cylinder.position.addSelf(half_length_offset);
+
+    cylinder.castShadow = true;
+    cylinder.receiveShadow = true;
 
     scene.addObject(cylinder);
 
@@ -117,6 +208,9 @@ function drawTree(start_position, direction, length, depth, radius) {
     // get a random branch number
     num_branches = floor((rand() % (MAX_BRANCHES - MIN_BRANCHES))) 
                    + MIN_BRANCHES;
+
+    
+
 
     // recursively generate child-branches
     for (var i = 0; i < num_branches; ++i) {
@@ -144,23 +238,34 @@ function drawTree(start_position, direction, length, depth, radius) {
         })(new_position, new_direction, new_length, new_depth, new_radius), 0);
 
     }
-
 }
 
 function setupLights() {
+    //
+    // TODO: use SpotLight instead of DirectionalLight
 
     var ambient_light, main_light, auxilary_light, back_light;
 
     ambient_light = new THREE.AmbientLight(0x555555);
     scene.addLight(ambient_light);
 
-    main_light = new THREE.DirectionalLight(0xffffff, // hex color
+    light = new THREE.SpotLight(0xffffff);
+    light.position.set(0, 1500, 1000);
+    light.target.position.set(0, 0, 0);
+    light.castShadow = true;
+    scene.addLight(light);
+
+    /*
+    light = new THREE.DirectionalLight(0xffffff, // hex color
                                             1.0,      // intensity
                                             0,        // distance
                                             true);    // cast shadow
-    main_light.position = new THREE.Vector3(1, 1, 1).normalize(); 
-    scene.addLight(main_light);
+    light.position = new THREE.Vector3(1, 1, 1).normalize(); 
+    light.castShadow = true;
+    scene.addLight(light);
+    */
 
+    /*
     auxilary_light = new THREE.DirectionalLight(0xffffff,
                                                 0.5,
                                                 0,
@@ -174,6 +279,7 @@ function setupLights() {
                                             false);
     back_light.position = new THREE.Vector3(0, 0.5, -1).normalize();
     scene.addLight(back_light);
+    */
 
 }
 
@@ -196,7 +302,7 @@ function drawCoordinate(center, length) {
         ]
     ];
 
-    for (var i in othorgonals) {
+    for (var i = 0; i < othorgonals.length; ++i) {
         var v = othorgonals[i][0],
             color = othorgonals[i][1];
 
@@ -220,10 +326,7 @@ function drawCoordinate(center, length) {
 }
 
 
-function drawGridPlane(params) {
-    var center   = params.center   || new THREE.Vector3(0, 0, 0),
-        length   = params.length   || 500,
-        segments = params.segments || 20;
+function drawGridPlane(center, length, segments) {
 
     // line geometry
     var geometry = new THREE.Geometry();    
@@ -253,47 +356,58 @@ function drawGridPlane(params) {
     }
 }
 
+function drawGround() {
+    var ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(500, 500),
+        new THREE.MeshLambertMaterial({ color: 0x777777 })
+    );
+    ground.rotation.x = - PI / 2;
+    ground.scale.set(100, 100, 100);
+
+    ground.castShadow = false;
+    ground.receiveShadow = true;
+
+    scene.addObject(ground);
+}
+
 
 function animate() {
     requestAnimationFrame(animate);
+    renderer.clear();
     renderer.render(scene, camera);
     stats.update();
-
 }
 
 
 function removeInfo() {
-    (function(ele) {
+    (function (ele) {
         ele.parentNode.removeChild(ele)
     })(document.getElementById("info"));
 }
 
 
-window.onload = function() {
+window.onload = function () {
 
     if (!Detector.webgl) {
         Detector.addGetWebGLMessage();
         removeInfo();
         return;
     }
+
     init();
 
-    setupLights();
 
     /*
-    drawCoordinate(new THREE.Vector3(-250, 0, -250),  // center
+    drawCoordinate(new THREE.Vector3(0, 0, 0),  // center
                    200);                        // length
-    */
+    
 
+    /*
     drawGridPlane(new THREE.Vector3(0, 0, 0),  // center
                   500,                         // length
                   20);                         // num segs
+                  */
 
-    drawTree(new THREE.Vector3(0, 0, 0), // start position
-             new THREE.Vector3(0, 1, 0), // direction
-             150,                        // length
-             8,                          // depth
-             10);                        // radius
 
     animate();
 };
