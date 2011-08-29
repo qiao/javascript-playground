@@ -1,4 +1,4 @@
-var renderer, scene, camera;
+var renderer, scene, camera,
 
     sin = Math.sin,
     cos = Math.cos,
