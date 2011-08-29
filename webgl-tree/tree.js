@@ -377,11 +377,11 @@ window.onload = function () {
 
     drawGround();
 
+    /*
     drawCoordinate(new THREE.Vector3(0, 0, 0),  // center
                    200);                        // length
     
 
-    /*
     drawGridPlane(new THREE.Vector3(0, 0, 0),  // center
                   500,                         // length
                   20);                         // num segs
