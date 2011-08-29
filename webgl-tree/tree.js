@@ -1,64 +1,43 @@
 var renderer, scene, camera, stats,
 
-    /*
-    initPos = new THREE.Vector3(700, 50, 1900),
-    initLight = new THREE.Vector3(0, 1500, 1000),
-    deltaCam = new THREE.Vector3(),
-    */
-
-    sceneHUD, hudMaterial, cameraOtho,
-
-    SHADOW_MAP_WIDTH = 1024,
-    SHADOW_MAP_HEIGHT = 1024,
-
-    SCREEN_WIDTH = window.innerWidth,
-    SCREEN_HEIGHT = window.innerHeight,
-
-    MAX_BRANCHES = 5,
-    MIN_BRANCHES = 3,
-    RADIUS_SHRINK = 0.6,
-    MIN_LENGTH_FACTOR = 0.7,
-    MAX_LENGTH_FACTOR = 1,
-    MIN_OFFSET_FACTOR = 0.7,
-
     sin = Math.sin,
     cos = Math.cos,
     tan = Math.tan,
     rand = Math.random,
     floor = Math.floor,
-    PI = Math.PI;
+    round = Math.round,
+    PI = Math.PI,
 
-function createHUD() {
+    SCREEN_WIDTH = window.innerWidth,
+    SCREEN_HEIGHT = window.innerHeight,
 
-    cameraOrtho = new THREE.Camera( 45, SHADOW_MAP_WIDTH / SHADOW_MAP_HEIGHT, 5, 3000 );
-    cameraOrtho.projectionMatrix = THREE.Matrix4.makeOrtho( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2,  
-            SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, -10, 1000 );
-    cameraOrtho.position.z = 10;
+    // tree params
+    MAX_BRANCHES = 4,
+    MIN_BRANCHES = 3,
 
-    var shader = THREE.ShaderUtils.lib[ "screen" ];
-    var uniforms = new THREE.UniformsUtils.clone( shader.uniforms );
+    RADIUS_SHRINK = 0.6,
 
-    hudMaterial = new THREE.MeshShaderMaterial( { vertexShader: shader.vertexShader, 
-        fragmentShader: shader.fragmentShader, uniforms: uniforms } );
+    MIN_LENGTH_FACTOR = 0.5,
+    MAX_LENGTH_FACTOR = 0.8,
 
-    var hudGeo = new THREE.PlaneGeometry( SHADOW_MAP_WIDTH / 2, SHADOW_MAP_HEIGHT / 2 );
-    var hudMesh = new THREE.Mesh( hudGeo, hudMaterial );
-    hudMesh.position.x = ( SCREEN_WIDTH - SHADOW_MAP_WIDTH / 2 ) * -0.5;
-    hudMesh.position.y = ( SCREEN_HEIGHT - SHADOW_MAP_HEIGHT / 2 ) * -0.5;
+    MIN_OFFSET_FACTOR = 0.7,
 
-    sceneHUD = new THREE.Scene();
-    sceneHUD.addObject( hudMesh );
+    MAX_SPREAD_RADIAN = PI / 4,
+    MIN_SPREAD_RADIAN = PI / 10,
 
-}
+    BASE_LEAF_SCALE = 5;
+
+    
+
 
 function init() {
 
     // setup track-ball camera
     camera = new THREE.TrackballCamera({
-        fov:    45,
+        fov: 45,
         aspect: window.innerWidth / window.innerHeight,
-        near:   1,
-        far:    10000,
+        near: 1,
+        far: 5000,
 
         rotateSpeed: 1.0,
         zoomSpeed: 1.2,
@@ -70,38 +49,24 @@ function init() {
         staticMoving: true,
         dynamicDampingFactor: 0.3,
 
-        keys: [ 65, 83, 68] // rotate, zoom, pan
+        keys: [65, 83, 68] // rotate, zoom, pan
     });
     camera.position.set(500, 100, 400);
     camera.translate(200, new THREE.Vector3(0, 1, 0));
 
-    /*
-    // SHADOW TEXTURE
-    var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
-    shadowTexture = new THREE.WebGLRenderTarget( SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, pars );
-    */
-
+    // setup scene
     scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x000000, 500, 1500);
 
-    setupLights();
+    // setup renderer
+    renderer = new THREE.WebGLRenderer({ 
+        clearColor: 0x000000, 
+        clearAlpha: 1, 
+        antialias: true 
+    });
+    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    /*
-    createHUD();
-    */
-    drawGround();
-
-    drawTree(new THREE.Vector3(0, 0, 0), // start position
-             new THREE.Vector3(0, 1, 0), // direction
-             150,                        // length
-             8,                          // depth
-             10);                        // radius
-
-    // setup scene
-    renderer = new THREE.WebGLRenderer( { clearColor: 0x000000, clearAlpha: 1, antialias: true } );
-    renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-
-    renderer.setClearColor( scene.fog.color, 1 );
+    renderer.setClearColor(scene.fog.color, 1);
     renderer.autoClear = false;
 
     renderer.shadowCameraNear = 3;
@@ -110,33 +75,14 @@ function init() {
 
     renderer.shadowMapBias = 0.0039;
     renderer.shadowMapDarkness = 0.5;
-    renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
-    renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
 
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
 
-
-// setup renderer
-    /*
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    renderer.shadowCameraNear = 3;
-    renderer.shadowCameraFar = 3000;
-    renderer.shadowCameraFov = 45;
-
-    renderer.shadowMapWidth = SHADOW_MAP_WIDTH;
-    renderer.shadowMapHeight = SHADOW_MAP_HEIGHT;
-    renderer.shadowMapEnabled = true;
-    */
-
-    // create graphic container and attach renderer to it
+    // create graphic container and attach the renderer to it
     container = document.createElement("div");
     document.body.appendChild(container);
     container.appendChild(renderer.domElement);
-
-
 
     // setup stats
     stats = new Stats();
@@ -144,11 +90,11 @@ function init() {
     stats.domElement.style.top = "0px";
     stats.domElement.style.zIndex = 100;
     container.appendChild(stats.domElement);
-
 }
 
 
 function drawTree(start_position, direction, length, depth, radius) {
+
 
     var cylinder, half_length_offset,
         new_position, new_direction, new_length, new_depth, new_radius,
@@ -162,12 +108,12 @@ function drawTree(start_position, direction, length, depth, radius) {
         color = ((rand() * 48 + 64) << 16) | 0x3311; // random brown color
     }
 
-    num_segs = depth + 1; // min num_segs = 2
+    num_segs = depth + 2; // min num_segs = 2
     cylinder = new THREE.Mesh(
-           new THREE.CylinderGeometry(num_segs,    // numSegs
-                                      radius,    // topRad
-                                      radius * RADIUS_SHRINK,    // botRad
-                                      length,    // height
+           new THREE.CylinderGeometry(num_segs, // numSegs
+                                      radius, // topRad
+                                      radius * RADIUS_SHRINK, // botRad
+                                      length, // height
                                       0,    // topOffset
                                       0),   // botOffset
            new THREE.MeshLambertMaterial({ color: color })
@@ -175,7 +121,6 @@ function drawTree(start_position, direction, length, depth, radius) {
     // rotate the cylinder to follow the direction
     cylinder.lookAt(direction);
 
-    
     // get the offset from start position to cylinder center position
     half_length_offset = direction.clone();
     half_length_offset.setLength(length / 2);
@@ -189,11 +134,14 @@ function drawTree(start_position, direction, length, depth, radius) {
 
     scene.addObject(cylinder);
 
-
     // stop recursion if depth reached 1
     if (depth == 1) {
+        //drawLeaf(start_position,
+                 //direction,
+                 //BASE_LEAF_SCALE * radius);
         return;
     }
+
 
 
     // calculate the base start position for next branch
@@ -206,13 +154,41 @@ function drawTree(start_position, direction, length, depth, radius) {
     new_radius = radius * RADIUS_SHRINK;
 
     // get a random branch number
-    num_branches = floor((rand() % (MAX_BRANCHES - MIN_BRANCHES))) 
+    num_branches = round((rand() * (MAX_BRANCHES - MIN_BRANCHES))) 
                    + MIN_BRANCHES;
 
-    
+    for (var i = 0; i < num_branches; ++i) {
+        var spread_radian = rand() * (MAX_SPREAD_RADIAN - MIN_SPREAD_RADIAN) + 
+                            MIN_SPREAD_RADIAN;
 
+        var perp_vec = (new THREE.Vector3(1, 0, 0)).crossSelf(direction); 
+        perp_vec.setLength(direction.length() * tan(spread_radian));
+
+
+        new_direction = direction.clone().addSelf(perp_vec).normalize();
+
+        var rot_mat = new THREE.Matrix4();
+        rot_mat.setRotationAxis(direction, PI * 2 / num_branches * i);
+        rot_mat.rotateAxis(new_direction);
+
+        new_length = (rand() * (MAX_LENGTH_FACTOR - MIN_LENGTH_FACTOR) + 
+                     MIN_LENGTH_FACTOR) * length;
+
+        new_position = new_base_position.clone();
+        offset_vector = half_length_offset.clone();
+        new_position.addSelf(
+                offset_vector.multiplyScalar(
+                    2 * i / (num_branches - 1) * (1 - MIN_OFFSET_FACTOR)));
+
+        setTimeout((function(a, b, c, d, e) {
+            return function() {
+                drawTree(a, b, c, d, e);
+            };
+        })(new_position, new_direction, new_length, new_depth, new_radius), 0);
+    }
 
     // recursively generate child-branches
+    /*
     for (var i = 0; i < num_branches; ++i) {
 
         new_direction = new THREE.Vector3(rand() - 0.5, 
@@ -236,70 +212,29 @@ function drawTree(start_position, direction, length, depth, radius) {
                 drawTree(a, b, c, d, e);
             };
         })(new_position, new_direction, new_length, new_depth, new_radius), 0);
-
     }
+    */
 }
 
 function setupLights() {
-    //
-    // TODO: use SpotLight instead of DirectionalLight
-
     var ambient_light, main_light, auxilary_light, back_light;
 
     ambient_light = new THREE.AmbientLight(0x555555);
     scene.addLight(ambient_light);
 
-    light = new THREE.SpotLight(0xffffff);
-    light.position.set(0, 1500, 1000);
-    light.target.position.set(0, 0, 0);
-    light.castShadow = true;
-    scene.addLight(light);
-
-    /*
-    light = new THREE.DirectionalLight(0xffffff, // hex color
-                                            1.0,      // intensity
-                                            0,        // distance
-                                            true);    // cast shadow
-    light.position = new THREE.Vector3(1, 1, 1).normalize(); 
-    light.castShadow = true;
-    scene.addLight(light);
-    */
-
-    /*
-    auxilary_light = new THREE.DirectionalLight(0xffffff,
-                                                0.5,
-                                                0,
-                                                false); // shadow off
-    auxilary_light.position = new THREE.Vector3(-1, 0.7, 1).normalize();
-    scene.addLight(auxilary_light);
-
-    back_light = new THREE.DirectionalLight(0xffffff,
-                                            0.7,
-                                            0,
-                                            false);
-    back_light.position = new THREE.Vector3(0, 0.5, -1).normalize();
-    scene.addLight(back_light);
-    */
-
+    main_light = new THREE.SpotLight(0xffffff);
+    main_light.position.set(0, 1000, 1000);
+    main_light.castShadow = true;
+    scene.addLight(main_light);
 }
 
 
 
 function drawCoordinate(center, length) {
-
     var othorgonals = [
-        [
-            new THREE.Vector3(length, 0, 0),
-            0xff0000
-        ],
-        [
-            new THREE.Vector3(0, length, 0),
-            0x00ff00
-        ],
-        [
-            new THREE.Vector3(0, 0, length),
-            0x0000ff
-        ]
+        [new THREE.Vector3(length, 0, 0), 0xff0000],
+        [new THREE.Vector3(0, length, 0), 0x00ff00],
+        [new THREE.Vector3(0, 0, length), 0x0000ff]
     ];
 
     for (var i = 0; i < othorgonals.length; ++i) {
@@ -371,7 +306,7 @@ function drawGround() {
 }
 
 
-function animate() {
+function animate(update) {
     requestAnimationFrame(animate);
     renderer.clear();
     renderer.render(scene, camera);
@@ -386,6 +321,48 @@ function removeInfo() {
 }
 
 
+function drawLeaf(position, direction, scale) {
+    
+    // leaf vertices
+    var vertices = [
+        [0, 0, 0],
+        [1, 0, -1],
+        [0, 0, 2],
+        [-1, 0, -1],
+    ];
+    vertices.forEach(function (v, i, a) {
+        a[i].forEach(function (vv, ii, aa) {
+            aa[ii] *= scale;
+        });
+    }); 
+
+    // leaf geometry
+    var geometry = new THREE.Geometry();
+    geometry.vertices = vertices.map(function (v) {
+        return new THREE.Vertex(
+            new THREE.Vector3(v[0], v[1], v[2])
+        );
+    });
+    geometry.faces.push(new THREE.Face3(0, 1, 2));
+    geometry.faces.push(new THREE.Face3(0, 2, 3));
+    geometry.faces.push(new THREE.Face3(0, 2, 1));
+    geometry.faces.push(new THREE.Face3(0, 3, 2));
+
+    geometry.computeCentroids();
+    geometry.computeFaceNormals();
+
+    // leaf material
+    var material = new THREE.MeshLambertMaterial({
+        color: 0x00ff00,
+    });
+
+    var leaf = new THREE.Mesh(geometry, material);
+    leaf.lookAt(direction);
+    leaf.position = position;
+
+    scene.addObject(leaf);
+}
+
 window.onload = function () {
 
     if (!Detector.webgl) {
@@ -396,8 +373,10 @@ window.onload = function () {
 
     init();
 
+    setupLights();
 
-    /*
+    drawGround();
+
     drawCoordinate(new THREE.Vector3(0, 0, 0),  // center
                    200);                        // length
     
@@ -408,6 +387,11 @@ window.onload = function () {
                   20);                         // num segs
                   */
 
+    drawTree(new THREE.Vector3(0, 0, 0), // start position
+             new THREE.Vector3(0, 1, 0), // direction
+             150,                        // length
+             8,                          // depth
+             10);                        // radius
 
     animate();
 };
