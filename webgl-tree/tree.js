@@ -1,4 +1,4 @@
-var renderer, scene, camera, stats,
+var renderer, scene, camera;
 
     sin = Math.sin,
     cos = Math.cos,
@@ -89,13 +89,6 @@ function init() {
     container = document.createElement("div");
     document.body.appendChild(container);
     container.appendChild(renderer.domElement);
-
-    ////setup stats
-    //stats = new Stats();
-    //stats.domElement.style.position = "absolute";
-    //stats.domElement.style.top = "0px";
-    //stats.domElement.style.zIndex = 100;
-    //container.appendChild(stats.domElement);
 }
 
 
@@ -302,7 +295,6 @@ function animate(update) {
     }
     renderer.clear();
     renderer.render(scene, camera);
-    stats.update();
 }
 
 
