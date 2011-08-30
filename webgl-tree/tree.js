@@ -25,36 +25,14 @@ var renderer, scene, camera,
     MAX_SPREAD_RADIAN = PI / 4,
     MIN_SPREAD_RADIAN = PI / 10,
 
-    BASE_LEAF_SCALE = 5,
-
     branch_counter;
-
-    
 
 
 function init() {
 
-    ////setup track-ball camera
-    //camera = new THREE.TrackballCamera({
-        //fov: 45,
-        //aspect: window.innerWidth / window.innerHeight,
-        //near: 1,
-        //far: 5000,
-
-        //rotateSpeed: 1.0,
-        //zoomSpeed: 1.2,
-        //panSpeed: 0.8,
-
-        //noZoom: false,
-        //noPan: false,
-
-        //staticMoving: true,
-        //dynamicDampingFactor: 0.3,
-
-        //keys: [65, 83, 68] rotate, zoom, pan
-    //});
-    camera = new THREE.Camera(45,
-                              SCREEN_WIDTH / SCREEN_HEIGHT,
+    // set up camera
+    camera = new THREE.Camera(45,                     
+                              SCREEN_WIDTH / SCREEN_HEIGHT, 
                               1,
                               5000);
     camera.position.set(500, 100, 400);
@@ -100,7 +78,6 @@ function drawTree(start_position, direction, length, depth, radius) {
         new_base_position, offset_vector,
         num_branches, color, num_segs;
 
-    branch_counter--;
 
     // determine branch color
     if (depth < 3) {
@@ -134,6 +111,8 @@ function drawTree(start_position, direction, length, depth, radius) {
     cylinder.receiveShadow = false;
 
     scene.addObject(cylinder);
+    // decrement the number of branches to draw
+    branch_counter--;
 
     // stop recursion if depth reached 1
     if (depth == 1) {
@@ -200,7 +179,7 @@ function drawTree(start_position, direction, length, depth, radius) {
 }
 
 function setupLights() {
-    var ambient_light, main_light, auxilary_light, back_light;
+    var ambient_light, main_light;
 
     ambient_light = new THREE.AmbientLight(0x555555);
     scene.addLight(ambient_light);
@@ -211,68 +190,6 @@ function setupLights() {
     scene.addLight(main_light);
 }
 
-
-
-function drawCoordinate(center, length) {
-    var othorgonals = [
-        [new THREE.Vector3(length, 0, 0), 0xff0000],
-        [new THREE.Vector3(0, length, 0), 0x00ff00],
-        [new THREE.Vector3(0, 0, length), 0x0000ff]
-    ];
-
-    for (var i = 0; i < othorgonals.length; ++i) {
-        var v = othorgonals[i][0],
-            color = othorgonals[i][1];
-
-        var geometry = new THREE.Geometry();
-
-        geometry.vertices.push(new THREE.Vertex(center));
-        geometry.vertices.push(new THREE.Vertex(center.clone().addSelf(v)));
-
-        var line = new THREE.Line(
-            geometry, 
-
-            new THREE.LineBasicMaterial({
-                color: color, 
-                opacity: 1, 
-                linewidth: 3
-            })
-        );
-
-        scene.addObject(line);
-    }
-}
-
-
-function drawGridPlane(center, length, segments) {
-
-    // line geometry
-    var geometry = new THREE.Geometry();    
-    geometry.vertices.push(
-            new THREE.Vertex(new THREE.Vector3(-length / 2, 0, 0)));
-    geometry.vertices.push(
-            new THREE.Vertex(new THREE.Vector3(length / 2, 0, 0)));
-
-    // line material
-    var material = new THREE.LineBasicMaterial({
-        color: 0xaaaaaa,
-        opacity: 0.7,
-        linewidth: 2
-    });
-
-    for (var i = 0; i <= segments; ++i) {
-        var line = new THREE.Line(geometry, material);
-        line.position = center.clone();
-        line.position.z += (i * length / segments) - length / 2;
-        scene.addObject(line);
-
-        var line = new THREE.Line(geometry, material);
-        line.position = center.clone();
-        line.position.x += (i * length / segments) - length / 2
-        line.rotation.y = PI / 2;
-        scene.addObject(line);
-    }
-}
 
 function drawGround() {
     var ground = new THREE.Mesh(
@@ -299,49 +216,6 @@ function animate(update) {
 }
 
 
-
-//function drawLeaf(position, direction, scale) {
-    
-    //// leaf vertices
-    //var vertices = [
-        //[0, 0, 0],
-        //[1, 0, -1],
-        //[0, 0, 2],
-        //[-1, 0, -1],
-    //];
-    //vertices.forEach(function (v, i, a) {
-        //a[i].forEach(function (vv, ii, aa) {
-            //aa[ii] *= scale;
-        //});
-    //}); 
-
-    //// leaf geometry
-    //var geometry = new THREE.Geometry();
-    //geometry.vertices = vertices.map(function (v) {
-        //return new THREE.Vertex(
-            //new THREE.Vector3(v[0], v[1], v[2])
-        //);
-    //});
-    //geometry.faces.push(new THREE.Face3(0, 1, 2));
-    //geometry.faces.push(new THREE.Face3(0, 2, 3));
-    //geometry.faces.push(new THREE.Face3(0, 2, 1));
-    //geometry.faces.push(new THREE.Face3(0, 3, 2));
-
-    //geometry.computeCentroids();
-    //geometry.computeFaceNormals();
-
-    //// leaf material
-    //var material = new THREE.MeshLambertMaterial({
-        //color: 0x00ff00,
-    //});
-
-    //var leaf = new THREE.Mesh(geometry, material);
-    //leaf.lookAt(direction);
-    //leaf.position = position;
-
-    //scene.addObject(leaf);
-//}
-
 window.onload = function () {
 
     if (!Detector.webgl) {
@@ -352,16 +226,7 @@ window.onload = function () {
     init();
 
     setupLights();
-
     drawGround();
-
-    //drawCoordinate(new THREE.Vector3(0, 0, 0),  // center
-                   //200);                        // length
-    
-
-    //drawGridPlane(new THREE.Vector3(0, 0, 0),  // center
-                  //500,                         // length
-                  //20);                         // num segs
 
     // Set the initial branch counter to 1
     // the animation will stop when the counter decreases to 0
