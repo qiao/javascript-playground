@@ -20,19 +20,19 @@ var Caeser = (function() {
     }
 
     var Caeser = {
-        encrypt: function(plaintext, startIndex) {
+        encrypt: function(plaintext, shiftAmount) {
             var sequence = [];
             for (i = 0; i < 26; ++i) {
-                sequence.push(String.fromCharCode(ascii('A') + (startIndex + i) % 26));
+                sequence.push(String.fromCharCode(ascii('A') + (shiftAmount + i) % 26));
             }
 
             return substitute(plaintext, sequence);
         },
 
-        decrypt: function(ciphertext, startIndex) {
+        decrypt: function(ciphertext, shiftAmount) {
             var sequence = new Array(26);
             for (i = 0; i < 26; ++i) {
-                sequence[(startIndex + i) % 26] = String.fromCharCode(ascii('A') + i);
+                sequence[(shiftAmount + i) % 26] = String.fromCharCode(ascii('A') + i);
             }
 
             return substitute(ciphertext, sequence);
