@@ -1,0 +1,93 @@
+html, body {
+    margin: 0px;
+    padding: 0px;
+    background: #333;
+    color: #eee;
+}
+
+#wrapper {
+    width: 760px;
+    margin: 10px auto;
+}
+
+
+input[type=text], textarea {
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    background: #555;
+    border: 1px solid #555;
+    margin-bottom: 5px;
+    margin-top: 3px;
+    color: #eee;
+}
+
+input[type=text]:focus, textarea:focus {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3);
+    outline: medium none;
+}
+
+textarea {
+    height: 100px;
+}
+
+button {
+    padding: 5px;
+    margin-top: -4px;
+    border: none;
+    border-radius: 5px;
+    background: #555;
+    color: #eee;
+}
+
+button:hover {
+    background: #777;
+    cursor: pointer;
+}
+
+#key_input {
+    width: 80%;
+    float: left;
+}
+
+#encrypt_button, #crack_button, #sample_button {
+    width: 18%;
+    float: right;
+}
+
+#crack_button {
+}
+
+#sample_button {
+    float: right;
+}
+
+#list_title {
+    float: left;
+    margin-top: 5px;
+}
+
+.clearfix {
+    clear: both;
+}
+
+#crack_list {
+    width: 100%;
+    padding: 0px;
+}
+
+#crack_header {
+    margin-top: 15px;
+}
+
+#list_title {
+    display: none;
+}
+
+#crack_list>li {
+    border-top: solid 1px #555;
+    margin: 10px 0;
+    list-style: none;
+    word-wrap: break-word;
+}
