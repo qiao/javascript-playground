@@ -29,12 +29,12 @@ input[type=text]:focus, textarea:focus {
 }
 
 textarea {
-    height: 150px;
+    height: 100px;
 }
 
 button {
     padding: 5px;
-    margin-top: -6px;
+    margin-top: -4px;
     border: none;
     border-radius: 5px;
     background: #555;
@@ -51,11 +51,43 @@ button:hover {
     float: left;
 }
 
-#encrypt_button {
+#encrypt_button, #crack_button, #sample_button {
     width: 18%;
     float: right;
 }
 
+#crack_button {
+}
+
+#sample_button {
+    float: right;
+}
+
+#list_title {
+    float: left;
+    margin-top: 5px;
+}
+
 .clearfix {
     clear: both;
+}
+
+#crack_list {
+    width: 100%;
+    padding: 0px;
+}
+
+#crack_header {
+    margin-top: 15px;
+}
+
+#list_title {
+    display: none;
+}
+
+#crack_list>li {
+    border-top: solid 1px #555;
+    margin: 10px 0;
+    list-style: none;
+    word-wrap: break-word;
 }

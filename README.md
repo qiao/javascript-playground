@@ -7,10 +7,14 @@ homepage: https://github.com/qiao/javascript-playground
 
 ### Project List ###
 
-1. [WebGL Tree](http://qiao.github.com/javascript-playground/webgl-tree/)
+1. [Visual Befunge93 Interpreter](http://qiao.github.com/javascript-playground/befunge93/)
 
-    A simple demo using the awesome [Three.js](https://github.com/mrdoob/three.js) to generate a tree by recursion.
+    Visual Befunge93 interpreter using HTML5 canvas. This is my first attempt on Javascript, so the code is a bit messy.
 
-2. [Visual Befunge93 Interpreter](http://qiao.github.com/javascript-playground/befunge93/)
+2. [WebGL Tree](http://qiao.github.com/javascript-playground/webgl-tree/)
 
-    Visual Befunge93 interpreter using HTML5 canvas, with no external libraries.
+    A simple demo using the awesome [Three.js](https://github.com/mrdoob/three.js) to generate a tree by recursion. 
+
+3. [Vigenere Cipher](http://qiao.github.com/javascript-playground/vigenere-cipher/)
+
+    A demo of cracking Vigenere cipher. This is my homework for Cryptography and Network Security.

@@ -5,11 +5,16 @@
     <title>Vigenère Cipher</title>
 
     <link rel="stylesheet" href="./main.css" />
+
+    <script type="text/javascript" src="./caeser.js"></script>
+    <script type="text/javascript" src="./vigenere.js"></script>
     <script type="text/javascript" src="./main.js"></script>
 </head>
 <body>
     <div id="wrapper">
-        <label for="plaintext">Plaintext</label> <br>
+        <label for="plaintext" id="plaintext_label">Plaintext</label>
+        <button id="sample_button">Sample Text</button>
+        <div class="clearfix"></div>
         <textarea id="plaintext_area" name="plaintext"></textarea> <br>
 
         <label for="key">Key</label> <br>
@@ -20,6 +25,14 @@
 
         <label for="ciphertext">Ciphertext</label> <br>
         <textarea id="ciphertext_area" name="ciphertext"></textarea> <br>
+
+        <div id="crack_header">
+            <div id="list_title">Crack result</div>
+            <button id="crack_button">Crack</button>
+            <div class="clearfix"></div>
+        </div>
+
+        <ul id="crack_list"> </ul>
     </div>
 </body>
 </html>
