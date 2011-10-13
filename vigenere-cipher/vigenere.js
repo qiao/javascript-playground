@@ -186,6 +186,10 @@ var Vigenere = (function() {
                 overall.push([totalDifference, plaintext]);
             }
 
+            overall.sort(function(a, b) {
+                return a[0] < b[0];
+            });
+
             return overall;
         },
     };
