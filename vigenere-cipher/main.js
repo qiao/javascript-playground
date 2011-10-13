@@ -2,6 +2,9 @@ function $(id) {
     return document.getElementById(id);    
 }
 
+function strip(str) {
+    return str.replace(/\s+/g, '');
+}
 
 window.onload = function() {
     var plainTextArea = $('plaintext_area'),
@@ -10,6 +13,6 @@ window.onload = function() {
         cipherTextArea = $('ciphertext_area');
 
     encryptButton.onclick = function() {
-        console.log(plainTextArea.value);
+        plainTextArea.value = strip(plainTextArea.value).toUpperCase();
     };
 };
